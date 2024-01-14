@@ -32,21 +32,28 @@ class TokenStorage {
       final cleanScopes = clearScopes(scopes);
 
       var tknMap = storedTokens.values.firstWhere((tkn) {
+
+        final emptyScopeFound = tkn['scope']?.isEmpty ?? true;
+        if (cleanScopes.isEmpty) {
+          // If the scopes are empty, only tokens granted to empty scopes are considered valid...
+          return emptyScopeFound;
+        }
+
+        // If the scopes are not empty, but the token scopes are, so its not valid...
+        if (emptyScopeFound) {
+          return false;
+        }
+
         var found = false;
 
-        if (cleanScopes.isEmpty) {
-          //If the scopes are empty, onlty tokens granted to empty scopes are considered valid...
-          found = (tkn['scope'] == null || tkn['scope'].isEmpty);
-        } else {
-          //...Otherwise look for a token granted to a superset of the requested scopes
-          if (tkn.containsKey('scope')) {
-            final tknCleanScopes = clearScopes(tkn['scope'].cast<String>());
+        // ...Otherwise look for a token granted to a superset of the requested scopes
+        if (tkn.containsKey('scope')) {
+          final tknCleanScopes = clearScopes(tkn['scope'].cast<String>());
 
-            if (tknCleanScopes.isNotEmpty) {
-              var s1 = Set.from(tknCleanScopes);
-              var s2 = Set.from(cleanScopes);
-              found = s1.intersection(s2).length == cleanScopes.length;
-            }
+          if (tknCleanScopes.isNotEmpty) {
+            var s1 = Set.from(tknCleanScopes);
+            var s2 = Set.from(cleanScopes);
+            found = s1.intersection(s2).length == cleanScopes.length;
           }
         }
 
@@ -60,6 +67,7 @@ class TokenStorage {
   }
 
   Future<void> addToken(AccessTokenResponse tknResp) async {
+    if (!tknResp.isValid()) return;
     var tokens = await insertToken(tknResp);
     await storage.write(key, jsonEncode(tokens));
   }
