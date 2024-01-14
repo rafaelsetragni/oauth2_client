@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+export 'src/secure_storage.dart';
+
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:oauth2_client/access_token_response.dart';
